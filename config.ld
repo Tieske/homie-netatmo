@@ -1,6 +1,6 @@
-project='[repo-name]'
-title='[module-name] docs'
-description='[short-description]'
+project='homie-netatmo'
+title='homie-netatmo docs'
+description='A bridge that exposes Netatmo devices as Homie mqtt devices '
 
 format='markdown'
 use_markdown_titles = true
