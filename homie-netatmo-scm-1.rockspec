@@ -17,7 +17,7 @@ source = {
 description = {
   summary = "A bridge that exposes Netatmo devices as Homie mqtt devices ",
   detailed = [[
-    A bridge that exposes Netatmo devices as Homie mqtt devices 
+    A bridge that exposes Netatmo devices as Homie mqtt devices
   ]],
   license = "MIT",
   homepage = "https://github.com/"..github_account_name.."/"..github_repo_name,
@@ -25,6 +25,10 @@ description = {
 
 dependencies = {
   "lua >= 5.1, < 5.5",
+  "homie",
+  "lualogging >= 1.6.0, < 2",
+  "ansicolors",
+  "netatmo",
 }
 
 build = {
@@ -34,8 +38,13 @@ build = {
     ["homie-netatmo.init"] = "src/homie-netatmo/init.lua",
   },
 
+  install = {
+    bin = {
+      homienetatmo = "bin/homienetatmo.lua",
+    }
+  },
+
   copy_directories = {
-    -- can be accessed by `luarocks homie-netatmo doc` from the commandline
     "docs",
   },
 }
