@@ -3,6 +3,9 @@
 --- Main CLI application.
 -- Reads configuration from environment variables and starts the Millheat-to-Homie bridge.
 -- Does not support any CLI parameters.
+--
+-- For configureing the log, use LuaLogging enviornment variable prefix `"HOMIE_LOG_"`, see
+-- "logLevel" in the example below.
 -- @module homienetatmo
 -- @usage
 -- # configure parameters as environment variables
@@ -12,58 +15,25 @@
 -- export NETATMO_PASSWORD="xxxxxxxx"
 -- export NETATMO_POLL_INTERVAL=300           # default: 300 seconds (5 mins)
 -- export HOMIE_MQTT_URI="mqtt://synology"    # format: "mqtt(s)://user:pass@hostname:port"
--- export HOMIE_LOG_LEVEL="info"              # default: "INFO"
 -- export HOMIE_DOMAIN="homie"                # default: "homie"
 -- export HOMIE_DEVICE_ID="netatmo"           # default: "netatmo"
 -- export HOMIE_DEVICE_NAME="NA2H bridge"     # default: "Netatmo-to-Homie bridge"
+-- export HOMIE_LOG_LOGLEVEL="info"           # default: "INFO"
 --
 -- # start the application
 -- homienetatmo
 
-local ansicolors = require "ansicolors" -- https://github.com/kikito/ansicolors.lua
 local ll = require "logging"
-
-local log_level = tostring(os.getenv("HOMIE_LOG_LEVEL") or "INFO"):upper()
-assert(type(ll[log_level]) == "string", "environment variable HOMIE_LOG_LEVEL invalid; '"..log_level.."' is not a valid log-level")
-
-local logger do -- configure the default logger
-  require "logging.console"
-
-  logger = ll.defaultLogger(ll.console {
-    logLevel = ll[log_level],
-    destination = "stderr",
-    timestampPattern = "%y-%m-%d %H:%M:%S",
-    logPatterns = {
-      [ll.DEBUG] = ansicolors("%date%{cyan} %level %message %{reset}(%source)\n"),
-      [ll.INFO] = ansicolors("%date %level %message\n"),
-      [ll.WARN] = ansicolors("%date%{yellow} %level %message\n"),
-      [ll.ERROR] = ansicolors("%date%{red bright} %level %message %{reset}(%source)\n"),
-      [ll.FATAL] = ansicolors("%date%{magenta bright} %level %message %{reset}(%source)\n"),
-    }
-  })
-end
-
-
 local copas = require "copas"
+require("logging.rsyslog").copas() -- ensure copas, if rsyslog is used
+local logger = assert(require("logging.envconfig").set_default_logger("HOMIE_LOG"))
+
 
 do -- set Copas errorhandler
   local lines = require("pl.stringx").lines
+
   copas.setErrorHandler(function(msg, co, skt)
-    -- TODO: remove this code once Copas 4.1.0 is released
-    local co_str = co == nil and "nil" or copas.getthreadname(co)
-    local skt_str = skt == nil and "nil" or copas.getsocketname(skt)
-
-    msg = ("%s (coroutine: %s, socket: %s)"):format(tostring(msg), co_str, skt_str)
-
-    if type(co) == "thread" then
-      -- regular Copas coroutine
-      msg = debug.traceback(co, msg)
-    else
-      -- not a coroutine, but the main thread, this happens if a timeout callback
-      -- (see `copas.timeout` causes an error (those callbacks run on the main thread).
-      msg = debug.traceback(msg, 2)
-    end
-
+    msg = copas.gettraceback(msg, co, skt)
     for line in lines(msg) do
       ll.defaultLogger():error(line)
     end
@@ -92,7 +62,6 @@ logger:info("NETATMO_CLIENT_SECRET: ********")
 logger:info("NETATMO_USERNAME: %s", opts.netatmo_username)
 logger:info("NETATMO_PASSWORD: ********")
 logger:info("NETATMO_POLL_INTERVAL: %d seconds", opts.netatmo_poll_interval)
-logger:info("HOMIE_LOG_LEVEL: %s", log_level)
 logger:info("HOMIE_DOMAIN: %s", opts.homie_domain)
 logger:info("HOMIE_MQTT_URI: %s", opts.homie_mqtt_uri)
 logger:info("HOMIE_DEVICE_ID: %s", opts.homie_device_id)
