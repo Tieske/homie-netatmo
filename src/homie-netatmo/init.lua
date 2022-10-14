@@ -213,9 +213,13 @@ local function timer_callback(timer, self)
       node.properties["last-seen"]:set(module.last_seen or module.last_status_store)
     end
     -- check data-elements exposed; dynamic in case of future additions
-    for _, data_name in ipairs(module.data_type) do
-      local data_value = module.dashboard_data[data_name]
-      node.properties[data_name:lower()]:set(data_value)
+    if module.dashboard_data then
+      for _, data_name in ipairs(module.data_type) do
+        local data_value = module.dashboard_data[data_name]
+        node.properties[data_name:lower()]:set(data_value)
+      end
+    else
+      log:warn("[homie-netatmo] no dashboard data received for module '%s'", module.deviceName)
     end
   end
 end
