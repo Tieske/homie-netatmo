@@ -6,7 +6,7 @@
 --
 -- For configureing the log, use LuaLogging enviornment variable prefix `"HOMIE_LOG_"`, see
 -- "logLevel" in the example below.
--- @module homienetatmo
+-- @script homienetatmo
 -- @usage
 -- # configure parameters as environment variables
 -- export NETATMO_CLIENT_ID="xxxxxxxx"
@@ -22,6 +22,14 @@
 --
 -- # start the application
 -- homienetatmo
+
+
+-- do -- Add corowatch for debugging purposes
+--   local corowatch = require "corowatch"
+--   if jit then jit.off() end -- no hooks will be called for jitted code, so disable jit
+--   corowatch.export(_G)
+--   corowatch.watch(nil, 30) -- watch the main-coroutine, kill coroutine after 30 seconds
+-- end
 
 local ll = require "logging"
 local copas = require "copas"
@@ -41,6 +49,7 @@ do -- set Copas errorhandler
 end
 
 
+print("starting Netatmo-to-Homie bridge")
 logger:info("starting Netatmo-to-Homie bridge")
 
 

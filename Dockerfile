@@ -4,19 +4,19 @@ RUN apk add make gcc libc-dev git openssl-dev
 
 
 # install dependencies separately to not have --dev versions for them as well
-RUN luarocks install luasec
 RUN luarocks install copas
+RUN luarocks install luasec
 RUN luarocks install penlight
 RUN luarocks install Tieske/luamqtt --dev
 RUN luarocks install homie --dev
 RUN luarocks install luabitop
-RUN luarocks install netatmo --dev
+#RUN luarocks install corowatch --dev
 
 # copy the local repo contents and build it
 COPY ./ /tmp/homie-netatmo
 RUN cd /tmp/homie-netatmo && luarocks make
-# while unreleased, replace lualogging with dev version
-RUN luarocks remove lualogging --force; luarocks install lualogging --dev
+# while unreleased, replace with dev version
+#RUN luarocks remove copas --force; luarocks install copas --dev --deps-mode none
 
 
 FROM akorn/lua:5.1-alpine
