@@ -31,6 +31,8 @@ local copas_timer = require "copas.timer"
 local Device = require "homie.device"
 local log = require("logging").defaultLogger()
 
+local Netatmo = require("netatmo")
+Netatmo.https = require("copas.http")  -- make sure we use non-blocking Copas http
 
 local function create_device(self_bridge)
   local newdevice = {
@@ -228,7 +230,7 @@ end
 
 return function(self)
   -- Netatmo API session object
-  self.netatmo = require("netatmo").new(
+  self.netatmo = Netatmo.new(
     self.netatmo_client_id, self.netatmo_client_secret,
     self.netatmo_username, self.netatmo_password)
 
