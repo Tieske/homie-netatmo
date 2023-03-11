@@ -124,7 +124,7 @@ local function create_device(self_bridge)
     -- check data-elements exposed; dynamic in case of future additions
     do
       local units = {
-        Temperature = "C",
+        Temperature = "°C",
         Humidity = "%",
         CO2 = "ppm",
         Pressure = "mbar",
