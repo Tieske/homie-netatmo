@@ -20,9 +20,4 @@
 
 ### Version X.Y.Z, unreleased
 
-  - a fix
-  - a change
-
-### Version 0.1.0, released 01-Jan-2022
-
   - initial release

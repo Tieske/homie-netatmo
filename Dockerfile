@@ -36,8 +36,10 @@ RUN apk add --no-cache \
 
 ENV NETATMO_CLIENT_ID "client-id..."
 ENV NETATMO_CLIENT_SECRET "client-secret..."
-ENV NETATMO_USERNAME "username..."
-ENV NETATMO_PASSWORD "password..."
+ENV NETATMO_LISTEN_IP "ip adress to listen on (in container)"
+ENV NETATMO_LISTEN_PORT "port to listen on (in container)"
+ENV NETATMO_REDIRECT_HOST "host to redirect to (outside container)"
+ENV NETATMO_REDIRECT_PORT "port to redirect to (outside container)"
 ENV NETATMO_POLL_INTERVAL "60"
 ENV HOMIE_DOMAIN "homie"
 ENV HOMIE_MQTT_URI "mqtt://mqtthost:1883"
