@@ -31,6 +31,7 @@
 -- copas.loop()
 
 local REDIRECT_PATH = "/netatmo/auth"
+local START_PATH = "/authorize"
 
 local copas = require "copas"
 local copas_timer = require "copas.timer"
@@ -54,7 +55,7 @@ local function start_server(session, host, port)
     local request = {}
     while true do
       local line, err = sock:receive("*l")
-      --print(line, err)
+      -- print(line, err)
       if not line then
         session.log:error("[homie-netatmo] Failed reading OAuth2 callback request: %s", err)
         sock:close()
@@ -64,22 +65,51 @@ local function start_server(session, host, port)
       request[#request+1] = line
     end
 
-    -- validate the first line
+    -- print(request[1])
+
+    -- hitting the start path?
+    local expect = "GET " .. START_PATH .. " "
+    if request[1]:sub(1, #expect) == expect then
+      session.log:info("[homie-netatmo] Authorization request")
+      sock:send(
+        "HTTP/1.1 308 Permanent Redirect\r\n"..
+        "Cache-Control: max-age=0, no-cache, no-store, must-revalidate\r\n"..
+        "Location: " .. session:get_authorization_url() .. "\r\n"..
+        "\r\n"..
+        "Redirecting....\r\n"
+      )
+      sock:close()
+      return
+    end
+
+    -- validate the first line to be the callback
     local expect = "GET " .. REDIRECT_PATH .. "?"
     if request[1]:sub(1, #expect) ~= expect then
       session.log:error("[homie-netatmo] Bad request: '%s'", request[1])
-      sock:send("HTTP/1.1 404 Not Found\r\n\r\nNot found.\r\n")
+      sock:send("HTTP/1.1 404 Not Found\r\n"..
+        "Cache-Control: max-age=0, no-cache, no-store, must-revalidate\r\n"..
+        "\r\n"..
+        "Not found.\r\n"
+      )
       sock:close()
       return
     end
 
     local ok, err = session:authorize(request[1])
     if not ok then
-      session.log:error("[homie-netatmo] Authentication failed: %s", err)
-      sock:send("HTTP/1.1 401 Unauthorized\r\n\r\nAuthorization failed.\r\n")
+      session.log:error("[homie-netatmo] Authorization failed: %s", err)
+      sock:send("HTTP/1.1 401 Unauthorized\r\n"..
+        "Cache-Control: max-age=0, no-cache, no-store, must-revalidate\r\n"..
+        "\r\n"..
+        "Authorization failed.\r\n"
+      )
     else
-      session.log:info("[homie-netatmo] Authenticated successfully")
-      sock:send("HTTP/1.1 200 OK\r\n\r\nOAuth2 access approved, please close this browser window.\r\n")
+      session.log:info("[homie-netatmo] Authorized successfully")
+      sock:send("HTTP/1.1 200 OK\r\n"..
+        "Cache-Control: max-age=0, no-cache, no-store, must-revalidate\r\n"..
+        "\r\n"..
+        "OAuth2 access approved, please close this browser window.\r\n"
+      )
     end
     sock:close()
   end
@@ -215,7 +245,8 @@ local function timer_callback(timer, self)
   local modules, err = self.netatmo:get_modules_data()
   if not modules then
     if err == self.netatmo.ERR_MUST_AUTHORIZE then
-      log:info("[homie-netatmo] please login: %s", self.netatmo:get_authorization_url())
+      log:info("[homie-netatmo] please login: http://%s:%s%s",
+        self.netatmo_redirect_host, self.netatmo_redirect_port, START_PATH)
     elseif err == self.netatmo.ERR_REFRESH_IN_PROGRESS then
       copas.sleep(3) -- wait a bit and try again
       return timer_callback(timer, self) -- TODO: possibility of loop!
