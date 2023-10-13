@@ -70,7 +70,7 @@ local function start_server(session, host, port)
     -- hitting the start path?
     local expect = "GET " .. START_PATH .. " "
     if request[1]:sub(1, #expect) == expect then
-      session.log:info("[homie-netatmo] Authorization request")
+      session.log:info("[homie-netatmo] Authorization request, redirecting to NetAtmo...")
       sock:send(
         "HTTP/1.1 308 Permanent Redirect\r\n"..
         "Cache-Control: max-age=0, no-cache, no-store, must-revalidate\r\n"..
@@ -85,7 +85,7 @@ local function start_server(session, host, port)
     -- validate the first line to be the callback
     local expect = "GET " .. REDIRECT_PATH .. "?"
     if request[1]:sub(1, #expect) ~= expect then
-      session.log:error("[homie-netatmo] Bad request: '%s'", request[1])
+      session.log:warn("[homie-netatmo] Bad request: '%s'", request[1])
       sock:send("HTTP/1.1 404 Not Found\r\n"..
         "Cache-Control: max-age=0, no-cache, no-store, must-revalidate\r\n"..
         "\r\n"..
